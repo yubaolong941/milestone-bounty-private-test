@@ -1,0 +1,52 @@
+{
+  "name": "milestone-pay",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "verify": "npm run lint && npm run typecheck && npm run test",
+    "ci": "npm run verify && npm run build",
+    "db:verify": "node scripts/db-verify.mjs",
+    "db:migrate": "node scripts/db-migrate.mjs",
+    "db:migrate:status": "node scripts/db-migrate.mjs --status",
+    "db:migrate:access-control": "bash scripts/migrate-access-control.sh",
+    "db:import:runtime": "node scripts/import-runtime-data.mjs",
+    "db:import:phase4-domains": "node scripts/import-phase4-domain-data.mjs",
+    "db:migrate:runtime-ops": "node scripts/db-migrate.mjs",
+    "db:seed:demo-bounties": "node scripts/seed-demo-bounties.mjs",
+    "demo:github": "node scripts/github-flow-demo.mjs",
+    "demo:github:send": "node scripts/github-flow-demo.mjs --send",
+    "github:demo": "node scripts/github-flow-demo.mjs",
+    "infer:smoke": "node scripts/infer-smoke.mjs",
+    "payout:retries": "node scripts/payout-retry-runner.mjs",
+    "meegle:sync": "node scripts/meegle-sync.mjs --once",
+    "meegle:sync:watch": "node scripts/meegle-sync.mjs"
+  },
+  "dependencies": {
+    "ethers": "^6.16.0",
+    "mysql2": "^3.20.0",
+    "next": "^14.2.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "uuid": "^10.0.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.3.0",
+    "@types/uuid": "^10.0.0",
+    "autoprefixer": "^10.4.0",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.35",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.5.0",
+    "vitest": "^4.0.4"
+  }
+}

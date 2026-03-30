@@ -1,0 +1,25 @@
+-- Payment retry jobs: MySQL-backed queue for auto-retry of failed payouts
+CREATE TABLE IF NOT EXISTS wlfi_payment_retry_jobs (
+  id            CHAR(36)     NOT NULL PRIMARY KEY,
+  task_id       CHAR(36)     NOT NULL,
+  company_id    CHAR(36)     DEFAULT NULL,
+  task_title    VARCHAR(512) NOT NULL DEFAULT '',
+  failure_code  VARCHAR(64)  NOT NULL DEFAULT 'UNKNOWN_FAILURE',
+  retry_strategy VARCHAR(64) NOT NULL DEFAULT 'manual',
+  status        VARCHAR(32)  NOT NULL DEFAULT 'pending',
+  source        VARCHAR(64)  NOT NULL DEFAULT 'auto_payout',
+  attempts      INT          NOT NULL DEFAULT 0,
+  max_attempts  INT          NOT NULL DEFAULT 0,
+  scheduled_at  DATETIME(3)  NOT NULL,
+  last_attempt_at DATETIME(3) DEFAULT NULL,
+  completed_at  DATETIME(3)  DEFAULT NULL,
+  locked_at     DATETIME(3)  DEFAULT NULL,
+  last_error    TEXT         DEFAULT NULL,
+  next_action   TEXT         DEFAULT NULL,
+  metadata_json TEXT         DEFAULT NULL,
+  created_at    DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at    DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  INDEX idx_retry_jobs_task_id   (task_id),
+  INDEX idx_retry_jobs_status_scheduled (status, scheduled_at),
+  INDEX idx_retry_jobs_company_id (company_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -1,0 +1,66 @@
+name: Bounty Task
+description: Publish a GitHub-native bounty task with structured metadata.
+title: "[Bounty] "
+labels:
+  - external-task
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Task summary
+      description: Describe the implementation goal and expected delivery.
+      placeholder: Build X, update Y, and document Z.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: List objective checks reviewers should use.
+      placeholder: |
+        - Feature flag enabled
+        - PR merged to default branch
+        - CI green
+    validations:
+      required: true
+  - type: input
+    id: bounty
+    attributes:
+      label: Bounty
+      description: Parsed by platform as `Bounty: $amount`
+      placeholder: "$50"
+    validations:
+      required: true
+  - type: input
+    id: reward_token
+    attributes:
+      label: RewardToken
+      description: Parsed by platform as `RewardToken: USD1`
+      placeholder: "USD1"
+    validations:
+      required: true
+  - type: input
+    id: claim
+    attributes:
+      label: Claim
+      description: Optional pre-assigned GitHub login
+      placeholder: "@octocat"
+    validations:
+      required: false
+  - type: input
+    id: wallet
+    attributes:
+      label: Wallet
+      description: Optional payout wallet if already known
+      placeholder: "0x1234..."
+    validations:
+      required: false
+  - type: dropdown
+    id: auto_payout
+    attributes:
+      label: Auto payout
+      options:
+        - "yes"
+        - "no"
+    validations:
+      required: true

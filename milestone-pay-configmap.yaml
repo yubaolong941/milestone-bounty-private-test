@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bounty-pay-config
+  labels:
+    app: bounty-pay
+data:
+  # ── Application ──────────────────────────────────────
+  APP_BASE_URL: "https://bounty.tomo.inc"
+  RUNTIME_DATA_BACKEND: "mysql"
+  WLFI_DEMO_MODE: "false"
+  WLFI_HOME: "/app/.wlfi"
+
+  # ── AI / Inference ──────────────────────────────────
+  AI_MODEL: "gpt-5.3-codex"
+  AI_MODEL_REQUIREMENT: "gpt-5.4"
+  AI_MODEL_CODE_REVIEW_A: "gpt-5.3-codex"
+  AI_MODEL_CODE_REVIEW_B: "claude-sonnet-4-5"
+  AI_MODEL_CODE_REVIEW_STRATEGY: "round_robin"
+  OPENAI_BASE_URL: "https://api-infer.agentsey.ai/v1"
+
+  # ── MySQL ────────────────────────────────────────────
+  MYSQL_HOST: "REPLACE_ME"
+  MYSQL_PORT: "3306"
+  MYSQL_USER: "REPLACE_ME"
+  MYSQL_DATABASE: "REPLACE_ME"
+
+  # ── GitHub App ───────────────────────────────────────
+  GITHUB_APP_SLUG: "bounty-test-tomo"
+  GITHUB_APP_ID: "3215112"
+  GITHUB_CLIENT_ID: "Iv23livae0ZVvsVA6esH"
+  GITHUB_INTERNAL_REPO_FULL_NAME: "tomo-inc/bounty-pay"
+  NEXT_PUBLIC_GITHUB_APP_SLUG: "bounty-test-tomo"
+
+  # ── Meegle ──────────────────────────────────────────
+  MEEGLE_MCP_URL: "https://meegle.com/mcp_server/v1"
+  MEEGLE_MCP_VIEW_URL: ""
+  MEEGLE_ALLOW_VIEW_FALLBACK: "false"
+
+  # ── Lark ────────────────────────────────────────────
+  LARK_APP_ID: "REPLACE_ME"
+
+  # ── On-chain: Token & Network ────────────────────────
+  WLFI_NETWORK: "bsc"
+  WLFI_TOKEN_SYMBOL: "USD1"
+  WLFI_TOKEN_ADDRESS: "0x8d0D000Ee44948FC98c9B98A4FA4921476f08B0d"
+  WLFI_PAYER_ADDRESS: "REPLACE_ME"
+
+  # ── Platform Payout ──────────────────────────────────
+  PLATFORM_PAYOUT_PROVIDER: "evm_private_key"
+  PLATFORM_PAYOUT_NETWORK: "bsc"
+  PLATFORM_PAYOUT_RPC_URL: "https://wallet.tomo.inc/rpc/v1/bsc"
+  PLATFORM_PAYOUT_TOKEN_SYMBOL: "USD1"
+  PLATFORM_PAYOUT_TOKEN_ADDRESS: "0x8d0D000Ee44948FC98c9B98A4FA4921476f08B0d"
+  PLATFORM_PAYOUT_WALLET_ADDRESS: "REPLACE_ME"
+
+  # ── Platform Treasury ────────────────────────────────
+  PLATFORM_BOUNTY_TREASURY_NETWORK: "bsc"
+  PLATFORM_BOUNTY_TREASURY_RPC_URL: "https://wallet.tomo.inc/rpc/v1/bsc"
+  PLATFORM_BOUNTY_TREASURY_TOKEN_ADDRESS: "0x8d0D000Ee44948FC98c9B98A4FA4921476f08B0d"
+  PLATFORM_BOUNTY_TREASURY_TOKEN_SYMBOL: "USD1"
+  PLATFORM_BOUNTY_TREASURY_TOKEN_DECIMALS: "18"
+  PLATFORM_BOUNTY_TREASURY_ADDRESS: "REPLACE_ME"
+
+  # ── Dev Admin (disable in production) ────────────────
+  ENABLE_DEV_ADMIN_LOGIN: "false"
+  DEV_ADMIN_SESSION_TTL_SECONDS: "7200"
+  NEXT_PUBLIC_ENABLE_DEV_ADMIN_LOGIN: "false"

@@ -1,0 +1,714 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --apple-bg-primary:   #000000;
+  --apple-bg-secondary: #1c1c1e;
+  --apple-bg-tertiary:  #2c2c2e;
+  --apple-bg-elevated:  #3a3a3c;
+  --apple-blue:    #0A84FF;
+  --apple-green:   #30D158;
+  --apple-red:     #FF453A;
+  --apple-orange:  #FF9F0A;
+  --apple-yellow:  #FFD60A;
+  --apple-purple:  #BF5AF2;
+  --apple-cyan:    #64D2FF;
+  --apple-text-1:  rgba(255,255,255,0.92);
+  --apple-text-2:  rgba(255,255,255,0.55);
+  --apple-text-3:  rgba(255,255,255,0.44);
+  --apple-sep:     rgba(255,255,255,0.08);
+  --apple-fill-1:  rgba(255,255,255,0.05);
+  --apple-fill-2:  rgba(255,255,255,0.08);
+  --apple-fill-3:  rgba(255,255,255,0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: var(--apple-text-1);
+  background: var(--apple-bg-primary);
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+               var(--font-inter), Inter, "Segoe UI", system-ui, sans-serif;
+  font-feature-settings: "kern" 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: rgba(10, 132, 255, 0.3);
+}
+
+/* ── Shell ─────────────────────────────────────────────── */
+
+.app-shell {
+  position: relative;
+  min-height: 100vh;
+}
+
+/* Grid overlay removed — Apple design uses clean backgrounds */
+
+/* ── Panel / Glass ─────────────────────────────────────── */
+
+.panel {
+  background: var(--apple-fill-1);
+  border: 0.5px solid var(--apple-sep);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border-radius: 16px;
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.06);
+  border: 0.5px solid rgba(255, 255, 255, 0.09);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+}
+
+.hero-card {
+  background: var(--apple-bg-secondary);
+  border: 0.5px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  border-radius: 16px;
+}
+
+/* ── Chips ─────────────────────────────────────────────── */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 999px;
+  border: 0.5px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.07);
+  padding: 0.25rem 0.625rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--apple-text-2);
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 0.5px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.375rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--apple-text-2);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+              background 0.2s ease,
+              border-color 0.2s ease;
+}
+
+.filter-chip:hover {
+  transform: scale(1.02);
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.filter-chip-active {
+  border-color: rgba(10, 132, 255, 0.50);
+  background: rgba(10, 132, 255, 0.18);
+  color: var(--apple-blue);
+}
+
+/* ── Feedback Banners ──────────────────────────────────── */
+
+.feedback-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-radius: 12px;
+  border: 0.5px solid;
+  padding: 1rem 1.25rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.feedback-success {
+  background: rgba(48, 209, 88, 0.10);
+  border-color: rgba(48, 209, 88, 0.25);
+}
+
+.feedback-warning {
+  background: rgba(255, 159, 10, 0.10);
+  border-color: rgba(255, 159, 10, 0.25);
+}
+
+.feedback-danger {
+  background: rgba(255, 69, 58, 0.10);
+  border-color: rgba(255, 69, 58, 0.25);
+}
+
+/* ── Grid Layouts ──────────────────────────────────────── */
+
+.workspace-grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.dashboard-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.data-grid {
+  display: grid;
+  gap: 0.875rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+/* ── Cards ─────────────────────────────────────────────── */
+
+.command-card {
+  background: var(--apple-bg-tertiary);
+  border: 0.5px solid var(--apple-sep);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.landing-cta-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-radius: 12px;
+  border: 0.5px solid var(--apple-sep);
+  background: var(--apple-fill-1);
+  padding: 1rem 1.125rem;
+  transition: background 0.2s ease,
+              transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.landing-cta-card:hover {
+  transform: scale(1.01);
+  background: var(--apple-fill-2);
+}
+
+/* ── Typography ────────────────────────────────────────── */
+
+.label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--apple-text-2);
+}
+
+.section-title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--apple-text-3);
+}
+
+.subtle {
+  color: var(--apple-text-2);
+}
+
+/* ── Form Elements ─────────────────────────────────────── */
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  border-radius: 10px;
+  border: 0.5px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--apple-text-1);
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: var(--apple-blue);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.textarea {
+  min-height: 120px;
+}
+
+/* ── Buttons ───────────────────────────────────────────── */
+
+.btn-primary,
+.btn-secondary,
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition: opacity 0.2s ease,
+              transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.btn-primary:hover,
+.btn-secondary:hover,
+.btn-ghost:hover {
+  transform: scale(1.01);
+}
+
+.btn-primary:active,
+.btn-secondary:active,
+.btn-ghost:active {
+  transform: scale(0.98);
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-ghost:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  transform: none;
+}
+
+.btn-primary {
+  border-radius: 999px;
+  padding: 0.5rem 1.125rem;
+  background: var(--apple-blue);
+  color: #ffffff;
+  border: none;
+}
+
+.btn-primary:hover {
+  opacity: 0.88;
+}
+
+.btn-secondary {
+  border-radius: 999px;
+  padding: 0.5rem 1.125rem;
+  background: rgba(48, 209, 88, 0.15);
+  color: var(--apple-green);
+  border: 0.5px solid rgba(48, 209, 88, 0.30);
+}
+
+.btn-secondary:hover {
+  opacity: 0.85;
+}
+
+.btn-ghost {
+  border-radius: 8px;
+  padding: 0.5rem 0.875rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--apple-text-1);
+  border: 0.5px solid rgba(255, 255, 255, 0.10);
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.10);
+}
+
+/* ── Metric Card ───────────────────────────────────────── */
+
+.metric-card {
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Info Display ──────────────────────────────────────── */
+
+.info-list {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.info-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--apple-text-2);
+}
+
+.info-key {
+  color: var(--apple-text-3);
+}
+
+.divider {
+  height: 0.5px;
+  background: var(--apple-sep);
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  background: rgba(0, 0, 0, 0.72);
+  border-bottom: 0.5px solid var(--apple-sep);
+}
+
+/* ── Core Page Tokens ──────────────────────────────────── */
+
+.core-page {
+  min-height: 100vh;
+  padding: 1.5rem;
+}
+
+.core-shell {
+  margin: 0 auto;
+  width: 100%;
+  max-width: 1280px;
+}
+
+.core-hero {
+  border-radius: 16px;
+  border: 0.5px solid var(--apple-sep);
+  background: var(--apple-bg-secondary);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+}
+
+.core-card {
+  border-radius: 12px;
+  border: 0.5px solid var(--apple-sep);
+  background: var(--apple-fill-1);
+}
+
+.core-heading {
+  font-size: clamp(1.5rem, 2.1vw, 2.25rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.core-subtle {
+  color: var(--apple-text-2);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.core-kpi {
+  font-size: 1.75rem;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.core-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 0.5px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--apple-text-2);
+}
+
+.core-action {
+  border-radius: 10px;
+  border: 0.5px solid var(--apple-sep);
+  background: var(--apple-fill-1);
+  padding: 0.875rem 1rem;
+  transition: background 0.2s ease,
+              border-color 0.2s ease,
+              transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.core-action:hover {
+  background: var(--apple-fill-2);
+  border-color: rgba(255, 255, 255, 0.14);
+  transform: scale(1.005);
+}
+
+/* ── Login Page ────────────────────────────────────────── */
+
+.login-stage {
+  position: relative;
+}
+
+.login-stage::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 60% 40% at 65% 35%, rgba(10, 132, 255, 0.06), transparent);
+}
+
+.login-shell {
+  position: relative;
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.45),
+              inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.login-sidebar {
+  background: var(--apple-bg-secondary);
+}
+
+.login-showcase {
+  overflow: hidden;
+  background: var(--apple-bg-primary);
+}
+
+.login-sidebar-title {
+  font-size: clamp(2rem, 3.2vw, 3rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.login-showcase-title {
+  font-size: clamp(1.75rem, 2.6vw, 2.4rem);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+
+.login-route {
+  display: block;
+  width: 100%;
+  text-align: left;
+  appearance: none;
+  cursor: pointer;
+  position: relative;
+  border-radius: 16px;
+  border: 0.5px solid rgba(255, 255, 255, 0.10);
+  padding: 1rem 1.125rem;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+              border-color 0.2s ease,
+              background 0.2s ease;
+}
+
+.login-route:disabled {
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.login-route:hover {
+  transform: scale(1.01);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.login-route-primary {
+  background: rgba(10, 132, 255, 0.15);
+  border-color: rgba(10, 132, 255, 0.30);
+  box-shadow: 0 4px 20px rgba(10, 132, 255, 0.12);
+}
+
+.login-route-primary:hover {
+  background: rgba(10, 132, 255, 0.20);
+  border-color: rgba(10, 132, 255, 0.40);
+}
+
+.login-route-secondary {
+  background: var(--apple-fill-1);
+}
+
+.login-route-secondary:hover {
+  background: var(--apple-fill-2);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.login-route-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.login-route-cta::after {
+  content: "\2192";
+  font-size: 0.8125rem;
+  opacity: 0.5;
+}
+
+.login-route-cta-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.github-icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  border: 0.5px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.github-icon {
+  width: 0.82rem;
+  height: 0.82rem;
+}
+
+.login-wallet-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: none;
+  background: var(--apple-blue);
+  padding: 0.875rem 1.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: white;
+  letter-spacing: -0.01em;
+  transition: opacity 0.2s ease,
+              transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.login-wallet-button:hover {
+  opacity: 0.88;
+  transform: scale(1.01);
+}
+
+.login-wallet-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  transform: none;
+}
+
+.login-signal-card,
+.login-proof-card {
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+              border-color 0.2s ease;
+}
+
+.login-signal-card {
+  min-height: 160px;
+  padding: 1.25rem;
+}
+
+.login-signal-card:hover {
+  transform: scale(1.02);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.login-signal-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 0.5px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.1875rem 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--apple-text-2);
+}
+
+.login-entry-proof {
+  border: 0.5px solid var(--apple-sep);
+  background: var(--apple-fill-1);
+}
+
+.login-wallet-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 0.5px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.75rem 1.25rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--apple-text-3);
+}
+
+@media (max-width: 1023px) {
+  .login-sidebar-title,
+  .login-showcase-title {
+    text-wrap: pretty;
+  }
+}
+
+/* ── Status Pills ──────────────────────────────────────── */
+
+.status-pill {
+  border-radius: 999px;
+  border: 0.5px solid transparent;
+  padding: 0.2rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.status-open { @apply bg-[rgba(10,132,255,0.12)] text-[#0A84FF] border border-[rgba(10,132,255,0.25)]; }
+.status-in_progress { @apply bg-[rgba(100,210,255,0.10)] text-[#64D2FF] border border-[rgba(100,210,255,0.22)]; }
+.status-submitted { @apply bg-[rgba(48,209,88,0.10)] text-[#30D158] border border-[rgba(48,209,88,0.22)]; }
+.status-ai_reviewing { @apply bg-[rgba(10,132,255,0.10)] text-[#0A84FF] border border-[rgba(10,132,255,0.22)]; }
+.status-awaiting_acceptance { @apply bg-[rgba(255,159,10,0.10)] text-[#FF9F0A] border border-[rgba(255,159,10,0.22)]; }
+.status-awaiting_manual_review { @apply bg-[rgba(255,159,10,0.10)] text-[#FF9F0A] border border-[rgba(255,159,10,0.22)]; }
+.status-awaiting_finance_review { @apply bg-[rgba(191,90,242,0.10)] text-[#BF5AF2] border border-[rgba(191,90,242,0.22)]; }
+.status-payment_failed { @apply bg-[rgba(255,69,58,0.10)] text-[#FF453A] border border-[rgba(255,69,58,0.22)]; }
+.status-accepted { @apply bg-[rgba(48,209,88,0.10)] text-[#30D158] border border-[rgba(48,209,88,0.22)]; }
+.status-disputed { @apply bg-[rgba(255,69,58,0.10)] text-[#FF453A] border border-[rgba(255,69,58,0.22)]; }
+.status-cancelled { @apply bg-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.40)] border border-[rgba(255,255,255,0.10)]; }
+
+.status-pending { @apply bg-[rgba(255,214,10,0.10)] text-[#FFD60A] border border-[rgba(255,214,10,0.22)]; }
+.status-reviewing { @apply bg-[rgba(10,132,255,0.10)] text-[#0A84FF] border border-[rgba(10,132,255,0.22)]; }
+.status-paid { @apply bg-[rgba(48,209,88,0.10)] text-[#30D158] border border-[rgba(48,209,88,0.22)]; }
+.status-overdue { @apply bg-[rgba(255,69,58,0.10)] text-[#FF453A] border border-[rgba(255,69,58,0.22)]; }
+
+/* ── Task Card ─────────────────────────────────────────── */
+
+.task-card {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Transitions */
+.drawer-overlay {
+  transition: opacity 0.3s ease;
+}
+.drawer-panel {
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.overlay-enter {
+  animation: fadeIn 0.25s ease forwards;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+.slide-in-right {
+  animation: slideInRight 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
