@@ -1,44 +1,48 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { connectBrowserWallet, signWalletMessage } from '@/lib/browser-wallet'
 import { TaskBounty } from '@/lib/types'
 import { humanizeStatus } from '@/lib/format'
 import { useFeedback } from '@/lib/use-feedback'
 import { SkeletonCard } from '@/components/SkeletonLoader'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
+import { useI18n, type MessageKey, type SupportedLocale, type TemplateValues } from '@/lib/i18n'
 
-function claimStatusMeta(task: TaskBounty, sessionGithub?: string) {
+type Translate = (key: MessageKey, values?: TemplateValues) => string
+
+function claimStatusMeta(task: TaskBounty, t: Translate, sessionGithub?: string) {
   if (task.status === 'paid') {
-    return { label: 'Paid', className: 'bg-apple-green/10 text-apple-green border border-apple-green/25' }
+    return { label: t('external.statusPaid'), className: 'bg-apple-green/10 text-apple-green border border-apple-green/25' }
   }
   if (!task.claimedByGithubLogin) {
-    return { label: 'Claimable', className: 'bg-white/[0.06] text-white/90 border border-white/[0.10]' }
+    return { label: t('external.statusClaimable'), className: 'bg-white/[0.06] text-white/90 border border-white/[0.10]' }
   }
   if (['awaiting_acceptance', 'submitted', 'accepted'].includes(task.status)) {
-    return { label: 'Pending acceptance / payout', className: 'bg-apple-orange/10 text-apple-orange border border-apple-orange/25' }
+    return { label: t('external.statusPendingPayout'), className: 'bg-apple-orange/10 text-apple-orange border border-apple-orange/25' }
   }
   if (task.claimedByGithubLogin === sessionGithub) {
-    return { label: 'In progress (mine)', className: 'bg-apple-blue/10 text-apple-blue border border-apple-blue/25' }
+    return { label: t('external.statusMine'), className: 'bg-apple-blue/10 text-apple-blue border border-apple-blue/25' }
   }
-  return { label: `In progress \u00b7 @${task.claimedByGithubLogin}`, className: 'bg-white/[0.06] text-white/50 border border-white/[0.08]' }
+  return { label: t('external.statusOwner', { owner: task.claimedByGithubLogin }), className: 'bg-white/[0.06] text-white/50 border border-white/[0.08]' }
 }
 
-function formatTimeLabel(value?: string) {
-  if (!value) return 'Updated recently'
+function formatTimeLabel(value: string | undefined, t: Translate) {
+  if (!value) return t('external.updatedRecently')
   const timestamp = new Date(value).getTime()
-  if (Number.isNaN(timestamp)) return 'Time pending sync'
+  if (Number.isNaN(timestamp)) return t('external.timePendingSync')
   const diffHours = Math.max(0, Math.round((Date.now() - timestamp) / (1000 * 60 * 60)))
-  if (diffHours < 1) return 'Updated within 1 hour'
-  if (diffHours < 24) return `Updated ${diffHours}h ago`
+  if (diffHours < 1) return t('external.updatedWithinHour')
+  if (diffHours < 24) return t('external.updatedHoursAgo', { hours: diffHours })
   const diffDays = Math.round(diffHours / 24)
-  return `Updated ${diffDays}d ago`
+  return t('external.updatedDaysAgo', { days: diffDays })
 }
 
-function formatExactTime(value?: string) {
+function formatExactTime(value: string | undefined, locale: SupportedLocale) {
   if (!value) return '-'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString('en-US', { hour12: false })
+  return date.toLocaleString(locale === 'zh' ? 'zh-CN' : 'en-US', { hour12: false })
 }
 
 function getExplorerTxUrl(task: TaskBounty) {
@@ -49,20 +53,21 @@ function getExplorerTxUrl(task: TaskBounty) {
   return undefined
 }
 
-function portalNextStep(task: TaskBounty, isMine: boolean, isCodeMode: boolean, hasWallet: boolean) {
-  if (isCodeMode && !hasWallet) return 'Bind your wallet first to enable submission and payout closure.'
-  if (!task.claimedByGithubLogin) return isCodeMode ? 'Claim this task first to lock delivery and payout ownership.' : 'Review requirements and submit security evidence.'
-  if (task.claimedByGithubLogin !== undefined && !isMine) return 'This task already has an owner. Switch to another claimable task.'
+function portalNextStep(task: TaskBounty, isMine: boolean, isCodeMode: boolean, hasWallet: boolean, t: Translate) {
+  if (isCodeMode && !hasWallet) return t('external.nextBindWallet')
+  if (!task.claimedByGithubLogin) return isCodeMode ? t('external.nextClaim') : t('external.nextReviewSecurity')
+  if (task.claimedByGithubLogin !== undefined && !isMine) return t('external.nextOwned')
   if (task.status === 'open' || task.status === 'in_progress') {
-    return isCodeMode ? 'Complete development and submit a PR to trigger review and acceptance.' : 'Prepare vulnerability summary, repro steps, and impact scope before submission.'
+    return isCodeMode ? t('external.nextDeliverCode') : t('external.nextDeliverSecurity')
   }
-  if (task.status === 'submitted') return 'Waiting for PR, CI, and acceptance checks. Keep supplementary evidence traceable.'
-  if (task.status === 'awaiting_acceptance' || task.status === 'accepted') return 'Task is in payout stage. Watch review decisions and payout notifications.'
-  if (task.status === 'paid') return 'Payout is completed. Save transaction proof and continue with new tasks.'
-  return 'Follow current status. Platform will provide next-step prompts at key checkpoints.'
+  if (task.status === 'submitted') return t('external.nextSubmitted')
+  if (task.status === 'awaiting_acceptance' || task.status === 'accepted') return t('external.nextPayout')
+  if (task.status === 'paid') return t('external.nextPaid')
+  return t('external.nextDefault')
 }
 
 export default function ExternalPortal() {
+  const { locale, setLocale, t } = useI18n()
   const [tasks, setTasks] = useState<TaskBounty[]>([])
   const [session, setSession] = useState<{ externalAuthType?: string; githubLogin?: string; walletAddress?: string } | null>(null)
   const [loading, setLoading] = useState(true)
@@ -74,7 +79,7 @@ export default function ExternalPortal() {
   const [bindingWallet, setBindingWallet] = useState(false)
   const [expandedTaskIds, setExpandedTaskIds] = useState<Record<string, boolean>>({})
 
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     try {
       const [taskRes, meRes] = await Promise.all([
         fetch('/api/tasks?view=claimable_external'),
@@ -95,17 +100,17 @@ export default function ExternalPortal() {
       setSession(null)
       setFeedback({
         tone: 'danger',
-        title: 'External portal failed to load',
-        detail: error instanceof Error ? error.message : 'Tasks or session data failed to load. Please refresh and retry.'
+        title: t('external.loadFailedTitle'),
+        detail: error instanceof Error ? error.message : t('external.loadFailedDetail')
       })
     } finally {
       setLoading(false)
     }
-  }
+  }, [setFeedback, t])
 
   useEffect(() => {
     fetchTasks()
-  }, [])
+  }, [fetchTasks])
 
   const externalTasks = tasks.filter((x) => x.source === 'external')
   const codeTasks = externalTasks.filter((x) => x.prUrl || x.repo)
@@ -150,16 +155,16 @@ export default function ExternalPortal() {
     if (isCodeMode && !hasWallet) {
       setFeedback({
         tone: 'warning',
-        title: 'Bind payout wallet first',
-        detail: 'This account has no wallet binding yet. Bind first to enable code bounty submission and settlement.'
+        title: t('external.bindWalletFirstTitle'),
+        detail: t('external.bindWalletFirstDetail')
       })
       return
     }
     if (!submitForm.prUrl.trim()) {
       setFeedback({
         tone: 'warning',
-        title: 'PR link is missing',
-        detail: 'Please add a GitHub PR URL so reviewer, CI, and payout can follow one evidence chain.'
+        title: t('external.prMissingTitle'),
+        detail: t('external.prMissingDetail')
       })
       return
     }
@@ -181,16 +186,16 @@ export default function ExternalPortal() {
     if (!res.ok) {
       setFeedback({
         tone: 'danger',
-        title: 'Submission failed',
-        detail: data?.inferPopup || data?.error || 'Platform could not accept this submission. Check PR URL and wallet binding, then retry.'
+        title: t('external.submissionFailedTitle'),
+        detail: data?.inferPopup || data?.error || t('external.submissionFailedDetail')
       })
       return
     }
 
     setFeedback({
       tone: 'success',
-      title: 'Submission entered review pipeline',
-      detail: data?.inferPopup || 'Your PR is recorded. Platform will continue with checks, acceptance, and payout validation.'
+      title: t('external.submissionSuccessTitle'),
+      detail: data?.inferPopup || t('external.submissionSuccessDetail')
     })
     setActiveSubmitTaskId(null)
     setSubmitForm({ prUrl: '', commitSha: '' })
@@ -210,16 +215,16 @@ export default function ExternalPortal() {
     if (!res.ok) {
       setFeedback({
         tone: 'danger',
-        title: 'Claim failed',
-        detail: data?.error || 'This task may already be claimed. Refresh and pick another available task.'
+        title: t('external.claimFailedTitle'),
+        detail: data?.error || t('external.claimFailedDetail')
       })
       return
     }
 
     setFeedback({
       tone: 'success',
-      title: 'Task claimed',
-      detail: 'You are now the owner. Next step is delivery and PR submission for automated acceptance.'
+      title: t('external.taskClaimedTitle'),
+      detail: t('external.taskClaimedDetail')
     })
     fetchTasks()
   }
@@ -238,8 +243,8 @@ export default function ExternalPortal() {
         setBindingWallet(false)
         setFeedback({
           tone: 'danger',
-          title: 'Binding preparation failed',
-          detail: challengeData?.error || 'Platform could not generate signature challenge. Please retry.'
+          title: t('external.bindingPreparationFailedTitle'),
+          detail: challengeData?.error || t('external.bindingPreparationFailedDetail')
         })
         return
       }
@@ -259,23 +264,23 @@ export default function ExternalPortal() {
       if (!res.ok) {
         setFeedback({
           tone: 'danger',
-          title: 'Wallet binding failed',
-          detail: data?.error || 'Signature submitted but platform verification did not complete. Retry shortly.'
+          title: t('external.walletBindingFailedTitle'),
+          detail: data?.error || t('external.walletBindingFailedDetail')
         })
         return
       }
       setFeedback({
         tone: 'success',
-        title: 'Wallet bound',
-        detail: `Payout address ${data.walletAddress} is now linked to this account. Future submissions flow to settlement automatically.`
+        title: t('external.walletBoundTitle'),
+        detail: t('external.walletBoundDetail', { wallet: data.walletAddress })
       })
       fetchTasks()
     } catch (error) {
       setBindingWallet(false)
       setFeedback({
         tone: 'warning',
-        title: 'Wallet binding not completed',
-        detail: error instanceof Error ? error.message : 'Binding was not completed. Unlock wallet extension and retry signing.'
+        title: t('external.walletBindingNotCompletedTitle'),
+        detail: error instanceof Error ? error.message : t('external.walletBindingNotCompletedDetail')
       })
     }
   }
@@ -285,14 +290,23 @@ export default function ExternalPortal() {
       <header className="topbar px-6 py-4">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
           <div>
-            <h1 className="font-semibold text-white">External Contributor Portal</h1>
+            <h1 className="font-semibold text-white">{t('external.title')}</h1>
             <p className="text-xs text-gray-500">
               {isCodeMode
-                ? `Code bounty mode (GitHub: ${session?.githubLogin || '-'})`
-                : `Security bounty mode (Wallet: ${session?.walletAddress || '-'})`}
+                ? t('external.codeMode', { github: session?.githubLogin || '-' })
+                : t('external.securityMode', { wallet: session?.walletAddress || '-' })}
             </p>
           </div>
-          <a href="/staff" className="btn-ghost px-4 py-2 text-xs">Internal console</a>
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <LanguageSwitcher
+              locale={locale}
+              onChange={setLocale}
+              label={t('common.language')}
+              englishLabel={t('common.english')}
+              chineseLabel={t('common.chinese')}
+            />
+            <a href="/staff" className="btn-ghost px-4 py-2 text-xs">{t('common.internalConsole')}</a>
+          </div>
         </div>
       </header>
 
@@ -301,18 +315,18 @@ export default function ExternalPortal() {
           <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="space-y-5">
               <div className="flex flex-wrap gap-2">
-                <span className="chip">external workspace</span>
-                <span className="chip">{isCodeMode ? 'github to payout' : 'report to payout'}</span>
-                <span className="chip">{baseTasks.length} visible tasks</span>
+                <span className="chip">{t('external.workspace')}</span>
+                <span className="chip">{isCodeMode ? t('external.githubToPayout') : t('external.reportToPayout')}</span>
+                <span className="chip">{t('external.visibleTasks', { count: baseTasks.length })}</span>
               </div>
               <div>
-                <p className="section-title">Contributor Journey</p>
+                <p className="section-title">{t('external.contributorJourney')}</p>
               </div>
               <div className="grid gap-3 md:grid-cols-3">
                 {[
-                  ['Claimable', String(filterCounts.unclaimed), 'No owner yet, ready to start'],
-                  ['Mine', String(filterCounts.mine), 'Claimed by you and still active'],
-                  ['Pending payout', String(filterCounts.pending_payout), 'Already in review or settlement']
+                  [t('external.claimable'), String(filterCounts.unclaimed), t('external.claimableDesc')],
+                  [t('external.mine'), String(filterCounts.mine), t('external.mineDesc')],
+                  [t('external.pendingPayout'), String(filterCounts.pending_payout), t('external.pendingPayoutDesc')]
                 ].map(([label, value, desc]) => (
                   <div key={label} className="command-card">
                     <p className="section-title">{label}</p>
@@ -327,12 +341,12 @@ export default function ExternalPortal() {
               <div className="panel rounded-2xl p-6">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="section-title">Next Best Action</p>
+                    <p className="section-title">{t('external.nextBestAction')}</p>
                     <p className="mt-2 text-xl font-semibold text-white">
-                      {highlightTask ? highlightTask.title : 'Start with a claimable task'}
+                      {highlightTask ? highlightTask.title : t('external.startClaimable')}
                     </p>
                   </div>
-                  <span className="chip">{highlightTask ? formatTimeLabel(highlightTask.updatedAt) : 'Not started'}</span>
+                  <span className="chip">{highlightTask ? formatTimeLabel(highlightTask.updatedAt, t) : t('common.notStarted')}</span>
                 </div>
                 <p className="mt-4 text-sm leading-6 subtle">
                   {highlightTask
@@ -340,9 +354,10 @@ export default function ExternalPortal() {
                       highlightTask,
                       highlightTask.claimedByGithubLogin === sessionGithub,
                       isCodeMode,
-                      hasWallet
+                      hasWallet,
+                      t
                     )
-                    : 'No tasks match this filter. Switch to All or Unclaimed to begin.'}
+                    : t('external.noFilterTasks')}
                 </p>
                 {highlightTask && (
                   <div className="mt-5 flex flex-wrap gap-3">
@@ -352,7 +367,7 @@ export default function ExternalPortal() {
                         className="btn-secondary"
                         disabled={busyTaskId === highlightTask.id}
                       >
-                        {busyTaskId === highlightTask.id ? 'Claiming...' : 'Claim now'}
+                        {busyTaskId === highlightTask.id ? t('external.claiming') : t('external.claimNow')}
                       </button>
                     )}
                     {['open', 'in_progress'].includes(highlightTask.status)
@@ -365,7 +380,7 @@ export default function ExternalPortal() {
                         }}
                         className="btn-primary"
                       >
-                        Open submit drawer
+                        {t('external.openSubmitDrawer')}
                       </button>
                     )}
                   </div>
@@ -373,12 +388,12 @@ export default function ExternalPortal() {
               </div>
 
               <div className="panel rounded-2xl p-6">
-                <p className="section-title">How It Works</p>
+                <p className="section-title">{t('external.howItWorks')}</p>
                 <div className="mt-4 space-y-4">
                   {[
-                    ['1. Claim task', 'Lock ownership identity for delivery and payout.'],
-                    ['2. Submit proof', isCodeMode ? 'Submit PR and optional commit SHA.' : 'Submit issue details, repro steps, and impact scope.'],
-                    ['3. Await decision', 'Platform runs review, risk checks, and payout checks.']
+                    [t('external.stepClaim'), t('external.stepClaimDesc')],
+                    [t('external.stepSubmit'), isCodeMode ? t('external.stepSubmitCodeDesc') : t('external.stepSubmitSecurityDesc')],
+                    [t('external.stepDecision'), t('external.stepDecisionDesc')]
                   ].map(([title, desc]) => (
                     <div key={title} className="rounded-xl border border-white/[0.08] bg-white/[0.05] p-4">
                       <p className="text-sm font-semibold text-white">{title}</p>
@@ -397,7 +412,7 @@ export default function ExternalPortal() {
               <p className="text-sm font-semibold text-white">{feedback.title}</p>
               <p className="mt-1 text-sm subtle">{feedback.detail}</p>
             </div>
-            <button onClick={dismiss} className="btn-ghost px-4 py-2 text-xs">Dismiss</button>
+            <button onClick={dismiss} className="btn-ghost px-4 py-2 text-xs">{t('common.dismiss')}</button>
           </div>
         )}
 
@@ -405,15 +420,15 @@ export default function ExternalPortal() {
           <div className="panel rounded-2xl border border-apple-orange/30 p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-2xl">
-                <p className="section-title">Payout Readiness</p>
-                <h3 className="mt-2 text-xl font-semibold text-white">Bind wallet before code submission</h3>
+                <p className="section-title">{t('external.payoutReadiness')}</p>
+                <h3 className="mt-2 text-xl font-semibold text-white">{t('external.bindWalletTitle')}</h3>
               </div>
               <div className="flex w-full max-w-xl flex-col gap-3 md:flex-row">
                 <button onClick={bindWallet} className="btn-secondary" disabled={bindingWallet}>
-                  {bindingWallet ? 'Connecting and signing...' : 'Connect wallet'}
+                  {bindingWallet ? t('external.connectingSigning') : t('external.connectWallet')}
                 </button>
                 <div className="rounded-[10px] border border-white/[0.08] bg-white/[0.05] px-4 py-3 text-xs leading-5 subtle">
-                  EVM signature wallets are supported for payout binding.
+                  {t('external.walletHint')}
                 </div>
               </div>
             </div>
@@ -423,10 +438,10 @@ export default function ExternalPortal() {
         {isCodeMode && (
           <div className="flex flex-wrap gap-2">
             {[
-              ['all', 'All'],
-              ['unclaimed', 'Unclaimed'],
-              ['mine', 'Mine'],
-              ['pending_payout', 'Pending payout']
+              ['all', t('external.filterAll')],
+              ['unclaimed', t('external.filterUnclaimed')],
+              ['mine', t('external.filterMine')],
+              ['pending_payout', t('external.filterPendingPayout')]
             ].map(([key, label]) => (
               <button
                 key={key}
@@ -443,28 +458,28 @@ export default function ExternalPortal() {
           <SkeletonCard />
         ) : displayTasks.length === 0 ? (
           <div className="panel rounded-[20px] p-10 text-center">
-            <p className="text-lg font-semibold text-white">No tasks under this filter</p>
+            <p className="text-lg font-semibold text-white">{t('external.emptyTitle')}</p>
             <p className="mt-3 text-sm leading-6 subtle">
               {filter === 'mine'
-                ? 'You have no active tasks yet. Switch to Unclaimed to pick one.'
+                ? t('external.emptyMine')
                 : filter === 'pending_payout'
-                  ? 'No tasks are awaiting payout currently. New submissions will move here automatically.'
-                  : 'Try All tasks or wait for newly synced external tasks.'}
+                  ? t('external.emptyPayout')
+                  : t('external.emptyDefault')}
             </p>
             <div className="mt-5 flex justify-center gap-3">
               {filter !== 'all' && (
-                <button onClick={() => setFilter('all')} className="btn-primary">View all tasks</button>
+                <button onClick={() => setFilter('all')} className="btn-primary">{t('common.viewAllTasks')}</button>
               )}
-              <a href="/staff" className="btn-ghost">Back to internal console</a>
+              <a href="/staff" className="btn-ghost">{t('common.internalConsole')}</a>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
             {displayTasks.map((task) => {
-              const statusMeta = claimStatusMeta(task, sessionGithub)
+              const statusMeta = claimStatusMeta(task, t, sessionGithub)
               const isMine = task.claimedByGithubLogin === sessionGithub
               const canSubmit = ['open', 'in_progress'].includes(task.status) && isCodeMode && isMine
-              const explanation = portalNextStep(task, isMine, isCodeMode, hasWallet)
+              const explanation = portalNextStep(task, isMine, isCodeMode, hasWallet, t)
               const payoutTxHash = task.rewardReleaseTxHash || task.txHash
               const payoutExplorerUrl = getExplorerTxUrl(task)
               const isExpanded = expandedTaskIds[task.id] === true
@@ -482,25 +497,25 @@ export default function ExternalPortal() {
                       </div>
                       <div className="flex flex-wrap items-center gap-3">
                         <h3 className="text-xl font-semibold text-white">{task.title}</h3>
-                        {task.claimedByGithubLogin && <span className="chip">Owner @{task.claimedByGithubLogin}</span>}
+                        {task.claimedByGithubLogin && <span className="chip">{t('external.owner', { owner: task.claimedByGithubLogin })}</span>}
                       </div>
                       <p className="mt-3 text-sm leading-7 subtle">{task.description}</p>
 
                       <div className="mt-4 grid gap-3">
                         <div className="rounded-xl border border-white/[0.08] bg-white/[0.05] p-4">
-                          <p className="section-title">Current Status</p>
+                          <p className="section-title">{t('external.currentStatus')}</p>
                           <p className="mt-2 text-sm font-semibold text-white">{humanizeStatus(task.status)}</p>
                           <p className="mt-2 text-sm leading-6 subtle">{explanation}</p>
                           {isExpanded && task.status === 'paid' && payoutTxHash && (
                             <div className="mt-4 rounded-[10px] border border-apple-green/25 bg-apple-green/10 p-3">
-                              <p className="text-xs uppercase tracking-[0.18em] text-apple-green">Payout Proof</p>
-                              <p className="mt-2 text-sm text-white">Platform has released payout to the contributor.</p>
-                              <p className="mt-2 text-xs text-slate-300">Paid at: {formatExactTime(task.paidAt)}</p>
+                              <p className="text-xs uppercase tracking-[0.18em] text-apple-green">{t('external.payoutProof')}</p>
+                              <p className="mt-2 text-sm text-white">{t('external.payoutCompleted')}</p>
+                              <p className="mt-2 text-xs text-slate-300">{t('external.paidAt')} {formatExactTime(task.paidAt, locale)}</p>
                               <p className="mt-2 break-all font-mono text-xs text-apple-green/85">Tx: {payoutTxHash}</p>
                               <div className="mt-3 flex flex-wrap gap-3">
                                 {payoutExplorerUrl && (
                                   <a href={payoutExplorerUrl} target="_blank" className="btn-ghost">
-                                    Open explorer
+                                    {t('external.openExplorer')}
                                   </a>
                                 )}
                               </div>
@@ -511,13 +526,13 @@ export default function ExternalPortal() {
 
                       {isExpanded && (
                         <div className="rounded-xl border border-white/[0.08] bg-white/[0.05] p-4">
-                          <p className="section-title">Requirement Clarity</p>
+                          <p className="section-title">{t('external.requirementClarity')}</p>
                           <p className="mt-2 text-sm font-semibold text-white">
-                            {task.requirementClarityStatus || 'Pending analysis'}
-                            {task.requirementClarityScore !== undefined ? ` · ${task.requirementClarityScore}` : ''}
+                            {task.requirementClarityStatus || t('external.pendingAnalysis')}
+                            {task.requirementClarityScore !== undefined ? ` - ${task.requirementClarityScore}` : ''}
                           </p>
                           <p className="mt-2 text-sm leading-6 subtle">
-                            {task.requirementClaritySummary || task.requirementSummarySnapshot || 'No additional requirement summary yet. Use Issue details and task description for delivery.'}
+                            {task.requirementClaritySummary || task.requirementSummarySnapshot || t('external.noAdditionalRequirement')}
                           </p>
                         </div>
                       )}
@@ -526,20 +541,20 @@ export default function ExternalPortal() {
                         <div className="mt-4 grid gap-3 md:grid-cols-2">
                           {task.acceptanceCriteriaSnapshot?.length ? (
                             <div className="rounded-xl border border-white/[0.08] bg-white/[0.05] p-4">
-                              <p className="section-title">Acceptance Checklist</p>
+                              <p className="section-title">{t('external.acceptanceChecklist')}</p>
                               <div className="mt-3 space-y-2">
                                 {task.acceptanceCriteriaSnapshot.slice(0, 3).map((item) => (
-                                  <p key={item} className="text-sm subtle">• {item}</p>
+                                  <p key={item} className="text-sm subtle">- {item}</p>
                                 ))}
                               </div>
                             </div>
                           ) : null}
                           {task.requirementCriticFindings?.length ? (
                             <div className="rounded-xl border border-white/[0.08] bg-white/[0.05] p-4">
-                              <p className="section-title">Submission Risks</p>
+                              <p className="section-title">{t('external.submissionRisks')}</p>
                               <div className="mt-3 space-y-2">
                                 {task.requirementCriticFindings.slice(0, 3).map((item) => (
-                                  <p key={item} className="text-sm subtle">• {item}</p>
+                                  <p key={item} className="text-sm subtle">- {item}</p>
                                 ))}
                               </div>
                             </div>
@@ -548,12 +563,12 @@ export default function ExternalPortal() {
                       )}
 
                       <div className="mt-4 flex flex-wrap gap-3">
-                        {task.prUrl && <a href={task.prUrl} target="_blank" className="btn-ghost">Open submitted PR</a>}
+                        {task.prUrl && <a href={task.prUrl} target="_blank" className="btn-ghost">{t('external.openSubmittedPr')}</a>}
                         <button
                           onClick={() => setExpandedTaskIds((prev) => ({ ...prev, [task.id]: !(prev[task.id] === true) }))}
                           className="btn-ghost"
                         >
-                          {isExpanded ? 'Hide details' : 'Show details'}
+                          {isExpanded ? t('external.hideDetails') : t('external.showDetails')}
                         </button>
                         {!task.claimedByGithubLogin && isCodeMode && (
                           <button
@@ -561,7 +576,7 @@ export default function ExternalPortal() {
                             className="btn-secondary"
                             disabled={busyTaskId === task.id}
                           >
-                            {busyTaskId === task.id ? 'Claiming...' : 'Claim task'}
+                            {busyTaskId === task.id ? t('external.claiming') : t('external.claimTask')}
                           </button>
                         )}
                         {canSubmit && (
@@ -572,7 +587,7 @@ export default function ExternalPortal() {
                             }}
                             className="btn-primary"
                           >
-                            {task.prUrl ? 'Update submission' : 'Submit GitHub PR'}
+                            {task.prUrl ? t('external.updateSubmission') : t('external.submitGithubPr')}
                           </button>
                         )}
                       </div>
@@ -581,59 +596,59 @@ export default function ExternalPortal() {
                     <div className="space-y-4">
                       {isExpanded && (
                         <div className="rounded-2xl border border-white/[0.08] bg-white/[0.05] p-4">
-                        <p className="section-title">Operational Facts</p>
+                        <p className="section-title">{t('external.operationalFacts')}</p>
                         <div className="mt-4 grid gap-3 sm:grid-cols-2">
                           <div>
-                            <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Company</p>
-                            <p className="mt-1 text-sm text-white">{task.companyName || 'Pending sync'}</p>
+                            <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('external.company')}</p>
+                            <p className="mt-1 text-sm text-white">{task.companyName || t('external.pendingSync')}</p>
                           </div>
                           <div>
-                            <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Repo visibility</p>
+                            <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('external.repoVisibility')}</p>
                             <p className="mt-1 text-sm text-white">{task.repoVisibility || 'public'}</p>
                           </div>
                           <div>
-                            <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Repo</p>
+                            <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('external.repo')}</p>
                             <p className="mt-1 text-sm text-white">{task.repo || '-'}</p>
                           </div>
                           <div>
-                            <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Last update</p>
-                            <p className="mt-1 text-sm text-white">{formatTimeLabel(task.updatedAt)}</p>
+                            <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('external.lastUpdate')}</p>
+                            <p className="mt-1 text-sm text-white">{formatTimeLabel(task.updatedAt, t)}</p>
                           </div>
                           {task.status === 'paid' && (
                             <>
                               <div>
-                                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Payer wallet</p>
+                                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('external.payerWallet')}</p>
                                 <p className="mt-1 break-all text-sm text-white">{task.payerWalletAddress || '-'}</p>
                               </div>
                               <div>
-                                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Contributor wallet</p>
+                                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('external.contributorWallet')}</p>
                                 <p className="mt-1 break-all text-sm text-white">{task.developerWallet || '-'}</p>
                               </div>
                               <div>
-                                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Payout Provider</p>
+                                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('external.payoutProvider')}</p>
                                 <p className="mt-1 text-sm text-white">{task.payoutProvider || '-'}</p>
                               </div>
                               <div>
-                                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">On-chain receipt</p>
+                                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{t('external.onchainReceipt')}</p>
                                 <p className="mt-1 break-all text-sm text-white">{payoutTxHash || '-'}</p>
                               </div>
                             </>
                           )}
                         </div>
-                          {task.mirrorRepoUrl && <p className="mt-4 text-sm subtle">Mirror repo: {task.mirrorRepoUrl}</p>}
+                          {task.mirrorRepoUrl && <p className="mt-4 text-sm subtle">{t('external.mirrorRepo')} {task.mirrorRepoUrl}</p>}
                         </div>
                       )}
 
                       {activeSubmitTaskId === task.id && canSubmit && (
                         <div className="rounded-2xl border border-apple-blue/25 bg-apple-blue/10 p-4">
-                          <p className="section-title">Submission Drawer</p>
-                          <h4 className="mt-2 text-lg font-semibold text-white">Submit delivery into review pipeline</h4>
+                          <p className="section-title">{t('external.submissionDrawer')}</p>
+                          <h4 className="mt-2 text-lg font-semibold text-white">{t('external.submitDeliveryTitle')}</h4>
                           <p className="mt-2 text-sm leading-6 subtle">
-                            After submission, reviewer, CI, AI gate, and payout checks continue on this PR evidence chain.
+                            {t('external.submitDeliveryDesc')}
                           </p>
                           <div className="mt-4 space-y-3">
                             <div>
-                              <label htmlFor="field-submit-pr-url" className="label">PR URL</label>
+                              <label htmlFor="field-submit-pr-url" className="label">{t('external.prUrl')}</label>
                               <input
                                 id="field-submit-pr-url"
                                 value={submitForm.prUrl}
@@ -643,20 +658,20 @@ export default function ExternalPortal() {
                               />
                             </div>
                             <div>
-                              <label htmlFor="field-submit-commit-sha" className="label">Commit SHA</label>
+                              <label htmlFor="field-submit-commit-sha" className="label">{t('external.commitSha')}</label>
                               <input
                                 id="field-submit-commit-sha"
                                 value={submitForm.commitSha}
                                 onChange={(e) => setSubmitForm((prev) => ({ ...prev, commitSha: e.target.value }))}
-                                placeholder="Commit SHA (optional)"
+                                placeholder={t('external.commitShaPlaceholder')}
                                 className="input mt-2"
                               />
                             </div>
                             <div className="flex flex-wrap gap-3">
                               <button onClick={() => submit(task.id)} className="btn-primary" disabled={busyTaskId === task.id}>
-                                {busyTaskId === task.id ? 'Submitting...' : 'Confirm submit'}
+                                {busyTaskId === task.id ? t('external.submitting') : t('external.confirmSubmit')}
                               </button>
-                              <button onClick={() => setActiveSubmitTaskId(null)} className="btn-ghost">Cancel</button>
+                              <button onClick={() => setActiveSubmitTaskId(null)} className="btn-ghost">{t('external.cancel')}</button>
                             </div>
                           </div>
                         </div>

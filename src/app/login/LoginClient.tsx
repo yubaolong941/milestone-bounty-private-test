@@ -2,12 +2,14 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
+import { MessageKey, useI18n } from '@/lib/i18n'
 
 const platformSignals = [
   {
-    title: 'Clear decisions',
-    desc: 'AI, reviewer, and finance gates remain explicit and auditable.',
-    badge: 'Decisions',
+    title: 'login.clearDecisionsTitle' as MessageKey,
+    desc: 'login.clearDecisionsDesc' as MessageKey,
+    badge: 'login.clearDecisionsBadge' as MessageKey,
     icon: (
       <svg className="h-8 w-8" fill="none" viewBox="0 0 32 32" aria-hidden="true">
         <rect width="32" height="32" rx="8" fill="rgba(10,132,255,0.12)" />
@@ -16,9 +18,9 @@ const platformSignals = [
     )
   },
   {
-    title: 'Verifiable payout',
-    desc: 'Issue, PR, and payout evidence stay in one ledger trail.',
-    badge: 'Evidence',
+    title: 'login.verifiablePayoutTitle' as MessageKey,
+    desc: 'login.verifiablePayoutDesc' as MessageKey,
+    badge: 'login.verifiablePayoutBadge' as MessageKey,
     icon: (
       <svg className="h-8 w-8" fill="none" viewBox="0 0 32 32" aria-hidden="true">
         <rect width="32" height="32" rx="8" fill="rgba(48,209,88,0.12)" />
@@ -27,9 +29,9 @@ const platformSignals = [
     )
   },
   {
-    title: 'Role-aware access',
-    desc: 'Every action is scoped to the right role, company, and permission.',
-    badge: 'Security',
+    title: 'login.roleAwareTitle' as MessageKey,
+    desc: 'login.roleAwareDesc' as MessageKey,
+    badge: 'login.roleAwareBadge' as MessageKey,
     icon: (
       <svg className="h-8 w-8" fill="none" viewBox="0 0 32 32" aria-hidden="true">
         <rect width="32" height="32" rx="8" fill="rgba(191,90,242,0.12)" />
@@ -41,17 +43,17 @@ const platformSignals = [
 
 const routeCards = [
   {
-    title: 'Company Team Access',
+    title: 'login.companyAccess' as MessageKey,
     href: '/api/auth/github/start?next=/staff',
-    cta: 'Continue with GitHub',
-    meta: 'GitHub SSO / staff console',
+    cta: 'login.companyCta' as MessageKey,
+    meta: 'login.companyMeta' as MessageKey,
     variant: 'primary' as const
   },
   {
-    title: 'Bounty Contributor Access',
+    title: 'login.contributorAccess' as MessageKey,
     href: '/api/auth/github/start?next=/external',
-    cta: 'Enter GitHub Bounty Portal',
-    meta: 'claim / submit / payout',
+    cta: 'login.contributorCta' as MessageKey,
+    meta: 'login.contributorMeta' as MessageKey,
     variant: 'ghost' as const
   }
 ]
@@ -68,6 +70,7 @@ function GitHubMark() {
 }
 
 function LoginContent() {
+  const { locale, setLocale, t } = useI18n()
   const [githubLoadingPath, setGithubLoadingPath] = useState<string | null>(null)
   const [message, setMessage] = useState('')
   const searchParams = useSearchParams()
@@ -78,21 +81,21 @@ function LoginContent() {
     if (!authError) return
     const detail = searchParams.get('auth_detail') || ''
     const errorMap: Record<string, string> = {
-      missing_code: 'GitHub login failed: authorization code is missing.',
-      state_mismatch: 'GitHub login failed: state verification failed.',
-      oauth_not_configured: 'GitHub login failed: OAuth is not configured on server.',
-      token_exchange_failed: 'GitHub login failed: could not exchange code for token.',
-      missing_access_token: 'GitHub login failed: access token was not returned.',
-      load_user_failed: 'GitHub login failed: cannot load GitHub user profile.',
-      callback_exception: 'GitHub login failed: callback exception occurred.'
+      missing_code: t('login.error.missingCode'),
+      state_mismatch: t('login.error.stateMismatch'),
+      oauth_not_configured: t('login.error.oauthNotConfigured'),
+      token_exchange_failed: t('login.error.tokenExchangeFailed'),
+      missing_access_token: t('login.error.missingAccessToken'),
+      load_user_failed: t('login.error.loadUserFailed'),
+      callback_exception: t('login.error.callbackException')
     }
-    const base = errorMap[authError] || 'GitHub login failed. Please retry in a moment.'
+    const base = errorMap[authError] || t('login.error.default')
     if (detail) {
       setMessage(`${base} (${detail})`)
       return
     }
     setMessage(base)
-  }, [searchParams])
+  }, [searchParams, t])
 
   const startGitHubLogin = (href: string) => {
     setGithubLoadingPath(href)
@@ -107,12 +110,21 @@ function LoginContent() {
         <section className="login-sidebar flex flex-col justify-between px-7 py-8 md:px-10 md:py-10">
           <div className="space-y-12">
             <div className="space-y-8">
-              <div className="inline-flex items-center rounded-full border border-white/[0.10] bg-white/[0.06] px-4 py-2 text-xs font-semibold tracking-[0.18em] text-white/70">
-                TOMO
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="inline-flex items-center rounded-full border border-white/[0.10] bg-white/[0.06] px-4 py-2 text-xs font-semibold tracking-[0.18em] text-white/70">
+                  {t('login.brand')}
+                </div>
+                <LanguageSwitcher
+                  locale={locale}
+                  onChange={setLocale}
+                  label={t('common.language')}
+                  englishLabel={t('common.english')}
+                  chineseLabel={t('common.chinese')}
+                />
               </div>
               <div>
                 <h1 className="login-sidebar-title mt-2 max-w-xl text-white/90">
-                  Select Role
+                  {t('login.selectRole')}
                 </h1>
               </div>
             </div>
@@ -127,7 +139,7 @@ function LoginContent() {
                   className={item.variant === 'primary' ? 'login-route login-route-primary' : 'login-route login-route-secondary'}
                 >
                   <div>
-                    <p className="text-sm font-semibold text-white/90">{item.title}</p>
+                    <p className="text-sm font-semibold text-white/90">{t(item.title)}</p>
                   </div>
                   <div className="mt-3 flex items-center justify-between gap-3">
                     <span className="login-route-cta-wrap">
@@ -135,10 +147,10 @@ function LoginContent() {
                         <GitHubMark />
                       </span>
                       <span className="login-route-cta">
-                      {githubLoadingPath === item.href ? 'Connecting...' : item.cta}
+                      {githubLoadingPath === item.href ? t('common.connecting') : t(item.cta)}
                       </span>
                     </span>
-                    <span className="text-[0.625rem] uppercase tracking-wider text-white/30">{item.meta}</span>
+                    <span className="text-[0.625rem] uppercase tracking-wider text-white/30">{t(item.meta)}</span>
                   </div>
                 </button>
               ))}
@@ -146,9 +158,9 @@ function LoginContent() {
 
             <div className="login-entry-proof rounded-xl px-4 py-3">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="chip">GitHub SSO</span>
-                <span className="chip">Role-Aware Access</span>
-                <span className="chip">Audit-Ready</span>
+                <span className="chip">{t('login.githubSso')}</span>
+                <span className="chip">{t('login.roleAwareAccess')}</span>
+                <span className="chip">{t('login.auditReady')}</span>
               </div>
             </div>
           </div>
@@ -159,12 +171,12 @@ function LoginContent() {
           <div className="relative z-10 mx-auto w-full max-w-lg space-y-10">
             {/* Hero statement */}
             <div className="space-y-4">
-              <p className="text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-apple-blue/70">How it works</p>
+              <p className="text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-apple-blue/70">{t('login.howItWorks')}</p>
               <h2 className="text-[clamp(1.5rem,2.5vw,2rem)] font-semibold leading-tight tracking-tight text-white/90">
-                From task to payout,<br />every step auditable.
+                {t('login.heroTitle')}
               </h2>
               <p className="max-w-md text-[0.9375rem] leading-relaxed text-white/40">
-                tomo connects delivery, review, and settlement into one verifiable pipeline.
+                {t('login.heroDescription')}
               </p>
             </div>
 
@@ -178,12 +190,12 @@ function LoginContent() {
                   <div className="shrink-0 mt-0.5">{signal.icon}</div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-[0.9375rem] font-semibold text-white/90">{signal.title}</p>
+                      <p className="text-[0.9375rem] font-semibold text-white/90">{t(signal.title)}</p>
                       <span className="shrink-0 rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-0.5 text-[0.625rem] font-medium uppercase tracking-wider text-white/35">
-                        {signal.badge}
+                        {t(signal.badge)}
                       </span>
                     </div>
-                    <p className="mt-1.5 text-sm leading-relaxed text-white/40">{signal.desc}</p>
+                    <p className="mt-1.5 text-sm leading-relaxed text-white/40">{t(signal.desc)}</p>
                   </div>
                 </div>
               ))}
@@ -191,9 +203,9 @@ function LoginContent() {
 
             {/* Bottom pills */}
             <div className="flex flex-wrap items-center gap-2 pt-2">
-              <span className="core-pill">Issue-linked</span>
-              <span className="core-pill">Policy-aware</span>
-              <span className="core-pill">Audit-traceable</span>
+              <span className="core-pill">{t('login.issueLinked')}</span>
+              <span className="core-pill">{t('login.policyAware')}</span>
+              <span className="core-pill">{t('login.auditTraceable')}</span>
             </div>
           </div>
 
