@@ -4,8 +4,8 @@ Milestone Pay is a Next.js foundation for AI delivery and bounty settlement scen
 
 ## Why this repository is ready for delivery
 
-- New-contributor-friendly entry point: this README + [Project Reference](/Users/fergus/WLFIAgent/milestone-bounty-pay/docs/README.md)
-- Single maintained documentation source: [Project Reference](/Users/fergus/WLFIAgent/milestone-bounty-pay/docs/README.md)
+- New-contributor-friendly entry point: this README + [Project Reference](docs/README.md)
+- Single maintained documentation source: [Project Reference](docs/README.md)
 - Setup, environment, architecture, database, demo, ops, and testing are all consolidated there
 - Engineering quality gates: `lint`, `typecheck`, `test`, `build`
 - Automated pipeline: GitHub Actions CI, runs `npm run ci` by default
@@ -67,7 +67,7 @@ tests/                   Basic unit tests
 
 ## Recommended Reading Order
 
-1. [Project Reference](/Users/fergus/WLFIAgent/milestone-bounty-pay/docs/README.md)
+1. [Project Reference](docs/README.md)
 
 ## Delivery Constraints
 
