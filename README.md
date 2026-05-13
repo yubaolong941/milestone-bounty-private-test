@@ -1,14 +1,46 @@
-# bounty-pay
+# Milestone Pay
 
-Milestone Pay is a Next.js foundation for AI delivery and bounty settlement scenarios, covering task publishing, claim binding, code review, budget locking, payment execution, and audit trail.
+Milestone Pay is a Next.js foundation for AI delivery and bounty settlement
+workflows. It connects task publishing, claim binding, code review, budget
+locking, payout execution, and audit evidence into one reviewable flow.
 
-## Why this repository is ready for delivery
+The project is intentionally small enough to run locally, while still showing
+the operational pieces a bounty platform needs: internal staff views, external
+collaborator views, GitHub integration points, settlement records, and evidence
+exports.
 
-- New-contributor-friendly entry point: this README + [Project Reference](/Users/fergus/WLFIAgent/milestone-bounty-pay/docs/README.md)
-- Single maintained documentation source: [Project Reference](/Users/fergus/WLFIAgent/milestone-bounty-pay/docs/README.md)
-- Setup, environment, architecture, database, demo, ops, and testing are all consolidated there
-- Engineering quality gates: `lint`, `typecheck`, `test`, `build`
-- Automated pipeline: GitHub Actions CI, runs `npm run ci` by default
+## Main Flow
+
+```text
+Requirement Binding
+-> Publish Task
+-> Claim
+-> Deliver
+-> Verify
+-> Review
+-> Finance Approval
+-> Payout
+-> Evidence Export
+```
+
+## Product Entry Points
+
+| Route | Purpose |
+| --- | --- |
+| `/` | Public product entry and overview |
+| `/login` | Role-based login entry |
+| `/staff` | Internal operations, review, finance, and audit console |
+| `/external` | External collaborator task and payout visibility |
+
+## What Is Included
+
+- Task and bounty lifecycle pages.
+- Internal and external workflow surfaces.
+- GitHub issue, PR, webhook, and demo event scripts.
+- MySQL-backed runtime option with SQL initialization scripts.
+- File-backed runtime option for local demos without a database.
+- Settlement, payout retry, audit, and reporting helpers.
+- Vitest, ESLint, TypeScript, and build verification scripts.
 
 ## Tech Stack
 
@@ -16,7 +48,7 @@ Milestone Pay is a Next.js foundation for AI delivery and bounty settlement scen
 - React 18
 - TypeScript 5
 - Tailwind CSS
-- MySQL
+- MySQL 8 compatible storage
 - Vitest
 
 ## Quick Start
@@ -27,30 +59,57 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Default access URL: [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000).
 
-If you only want to verify the engineering foundation without connecting external systems, use:
+For the lightest local setup, keep `RUNTIME_DATA_BACKEND=file` in
+`.env.local`. Use `RUNTIME_DATA_BACKEND=mysql` only when a MySQL instance is
+available and the `MYSQL_*` variables are configured.
 
-```bash
-npm run verify
+## Environment Setup
+
+Minimum variables for a local file-backed run:
+
+```env
+RUNTIME_DATA_BACKEND=file
+SESSION_SECRET=replace_with_a_long_random_secret
+APP_BASE_URL=http://localhost:3000
 ```
+
+Minimum variables for a MySQL-backed run:
+
+```env
+RUNTIME_DATA_BACKEND=mysql
+MYSQL_HOST=127.0.0.1
+MYSQL_PORT=3306
+MYSQL_USER=milestone_pay
+MYSQL_PASSWORD=replace_me
+MYSQL_DATABASE=milestone_pay
+SESSION_SECRET=replace_with_a_long_random_secret
+```
+
+Optional integrations are configured through `.env.example`, including GitHub
+PAT mode, GitHub App mode, Meegle sync, inference smoke tests, and BSC USD1
+treasury settings.
 
 ## Standard Commands
 
 | Command | Purpose |
 | --- | --- |
-| `npm run dev` | Local development |
-| `npm run build` | Production build |
-| `npm run start` | Start production build |
+| `npm run dev` | Start local development |
+| `npm run build` | Build the production app |
+| `npm run start` | Start the production build |
 | `npm run lint` | Run ESLint |
-| `npm run typecheck` | Run TypeScript type checking |
+| `npm run typecheck` | Run TypeScript checks |
 | `npm run test` | Run unit tests |
-| `npm run verify` | Run lint + typecheck + test sequentially |
-| `npm run ci` | Run verify + build sequentially |
+| `npm run verify` | Run lint, typecheck, and tests |
+| `npm run ci` | Run verify and production build |
 | `npm run db:verify` | Verify MySQL connectivity |
-| `npm run infer:smoke` | Verify AI inference gateway connectivity |
+| `npm run db:migrate` | Apply SQL initialization and migrations |
+| `npm run infer:smoke` | Verify inference gateway connectivity |
 | `npm run demo:github` | Preview GitHub webhook demo events |
-| `npm run demo:github:send` | Send demo events to local webhook |
+| `npm run demo:github:send` | Send demo events to the local webhook |
+| `npm run meegle:sync` | Run one Meegle sync cycle |
+| `npm run meegle:sync:watch` | Run Meegle sync continuously |
 
 ## Repository Structure
 
@@ -60,17 +119,47 @@ src/components/          Frontend business components
 src/lib/                 Business logic, adapters, data access
 scripts/                 Local verification and demo scripts
 sql/                     Initialization and migration scripts
-docs/                    Delivery docs, runbooks, environment notes
-tests/                   Basic unit tests
+docs/                    Project reference and runbook notes
+tests/                   Unit and integration-oriented tests
 .github/workflows/       CI workflows
 ```
 
-## Recommended Reading Order
+## Verification Checklist
 
-1. [Project Reference](/Users/fergus/WLFIAgent/milestone-bounty-pay/docs/README.md)
+Use this checklist before submitting changes or presenting a demo:
+
+1. Install dependencies with `npm install`.
+2. Create `.env.local` from `.env.example`.
+3. Choose `RUNTIME_DATA_BACKEND=file` for local-only verification or configure
+   MySQL and run `npm run db:verify`.
+4. Run `npm run lint`.
+5. Run `npm run typecheck`.
+6. Run `npm run test`.
+7. Run `npm run build` for production readiness.
+8. Capture any failing command output in the PR description if the failure is
+   unrelated to the submitted change.
+
+## Documentation
+
+The detailed project reference is maintained in [docs/README.md](docs/README.md).
+Use it for architecture, roles, settlement rules, database initialization,
+incident handling, reporting, and takeover notes.
+
+Recommended reading order:
+
+1. This README.
+2. [Project Reference](docs/README.md).
+3. `.env.example`.
+4. `package.json` scripts.
+5. `sql/001_wlfi_init_schema.sql`.
 
 ## Delivery Constraints
 
-- `.env.local` is for local use only; do not commit real keys, tokens, or wallet private keys.
-- Run `npm run verify` at least once before any demo.
-- Use `npm run ci` as the minimum local acceptance standard before submitting a PR.
+- Do not commit `.env.local`, private keys, webhook secrets, wallet private
+  keys, or real payout operator credentials.
+- Keep README and docs links repository-relative so they work on GitHub and in
+  local clones.
+- Prefer small PRs that state the affected flow, verification commands, and any
+  known unrelated failures.
+- Use `npm run ci` as the minimum local acceptance standard when code changes
+  affect runtime behavior.
